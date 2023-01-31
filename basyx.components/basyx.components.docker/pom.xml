@@ -1,24 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-    
+
 	<parent>
 		<groupId>org.eclipse.basyx</groupId>
 		<artifactId>basyx.components</artifactId>
-		<version>1.0.1</version>
-    </parent>
-	
+		<version>1.3.0</version>
+	</parent>
+
 	<artifactId>basyx.components.docker</artifactId>
 	<name>BaSyx Docker Base</name>
-	
+
 	<packaging>pom</packaging>
 
 	<!-- Includes all components in this project as separated modules -->
 	<modules>
 		<module>basyx.components.registry</module>
-    	<module>basyx.components.AASServer</module>
-  </modules>
-	
+		<module>basyx.components.AASServer</module>
+	</modules>
+
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -26,7 +28,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>properties-maven-plugin</artifactId>
-					<version>1.0.0</version>
+					<version>1.1.0</version>
 					<executions>
 						<execution>
 							<phase>initialize</phase>
@@ -42,12 +44,13 @@
 					</executions>
 				</plugin>
 
-				<!-- Generate separate jar for tests and exclude logback.xml from generated jars -->
+				<!-- Generate separate jar for tests and exclude logback.xml from generated 
+					jars -->
 				<!-- + create the executable jar -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.1.1</version>
+					<version>3.3.0</version>
 					<configuration>
 						<archive>
 							<manifest>
@@ -68,7 +71,7 @@
 						</executions>
 					</configuration>
 				</plugin>
-				
+
 				<!-- Copy the dependencies necessary to run the jar -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -87,42 +90,51 @@
 						</execution>
 					</executions>
 				</plugin>
-			
+
 				<!-- Build the docker image -->
 				<plugin>
-					<groupId>com.spotify</groupId>
-					<artifactId>dockerfile-maven-plugin</artifactId>
-					<version>1.4.10</version>
-					<executions>
-						<execution>
-							<id>default</id>
-							<goals>
-								<goal>build</goal>
-							</goals>
-						</execution>
-					</executions>
-					<configuration>
-						<repository>${BASYX_IMAGE_NAME}</repository>
-						<tag>${BASYX_IMAGE_TAG}</tag>
-						<buildArgs>
-							<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
-							<PORT>${BASYX_CONTAINER_PORT}</PORT>
-							<!-- The system property/env keys for basyx configuration files -->
-							<CONTEXT_CONFIG_KEY>BASYX_CONTEXT</CONTEXT_CONFIG_KEY>
-							<REGISTRY_CONFIG_KEY>BASYX_REGISTRY</REGISTRY_CONFIG_KEY>
-							<AAS_CONFIG_KEY>BASYX_AAS</AAS_CONFIG_KEY>
-							<MONGODB_CONFIG_KEY>BASYX_MONGODB</MONGODB_CONFIG_KEY>
-							<DOCKER_CONFIG_KEY>BASYX_DOCKER</DOCKER_CONFIG_KEY>
-							<SQL_CONFIG_KEY>BASYX_SQL</SQL_CONFIG_KEY>
-						</buildArgs>
-					</configuration>
-				</plugin>
-			
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>0.40.2</version>
+                    <configuration>
+                        <images>
+                            <image>
+                                <name>${BASYX_IMAGE_NAME}:${BASYX_IMAGE_TAG}</name>
+                                <build>
+                                    <contextDir>${project.basedir}</contextDir>
+                                    <args>
+                                        <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+										<PORT>${BASYX_CONTAINER_PORT}</PORT>
+										<!-- The system property/env keys for basyx configuration files -->
+										<CONTEXT_CONFIG_KEY>BASYX_CONTEXT</CONTEXT_CONFIG_KEY>
+										<REGISTRY_CONFIG_KEY>BASYX_REGISTRY</REGISTRY_CONFIG_KEY>
+										<AAS_CONFIG_KEY>BASYX_AAS</AAS_CONFIG_KEY>
+										<MONGODB_CONFIG_KEY>BASYX_MONGODB</MONGODB_CONFIG_KEY>
+										<DOCKER_CONFIG_KEY>BASYX_DOCKER</DOCKER_CONFIG_KEY>
+										<MQTT_CONFIG_KEY>BASYX_MQTT</MQTT_CONFIG_KEY>
+										<SQL_CONFIG_KEY>BASYX_SQL</SQL_CONFIG_KEY>
+                                    </args>
+                                </build>
+                            </image>
+                        </images>
+                        <verbose>true</verbose>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>docker:build</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>build</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
 				<!-- Create integration test environment -->
 				<plugin>
 					<groupId>com.dkanejs.maven.plugins</groupId>
 					<artifactId>docker-compose-maven-plugin</artifactId>
-					<version>2.5.1</version>
+					<version>4.0.0</version>
 					<configuration>
 						<composeFile>${project.basedir}/docker-compose.yml</composeFile>
 						<detachedMode>true</detachedMode>
@@ -152,13 +164,13 @@
 						</execution>
 					</executions>
 				</plugin>
-				
-				
+
+
 				<!-- Run integration tests -->
-				<plugin>    
+				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>2.20.1</version>
+					<version>3.0.0-M7</version>
 					<executions>
 						<execution>
 							<goals>
@@ -170,15 +182,72 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
+
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+			</plugin>
+
+			<!-- Attach sources to jar file -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
+
+			<!-- Generate separate jar for tests and exclude logback.xml from generated 
+				jars -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+			</plugin>
+
+			<!-- Run unit tests (Test*.java, *Test.java, *Tests.java and *TestCase.java 
+				excluding HTTP and TCP tests) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+			</plugin>
+		</plugins>
 	</build>
-	
-	<!--  Defines common dependencies for all docker components -->
+
+	<!-- Defines common dependencies for all docker components -->
 	<dependencies>
 		<!-- Depends on the components library -->
 		<dependency>
 			<groupId>org.eclipse.basyx</groupId>
 			<artifactId>basyx.components.lib</artifactId>
-			<version>1.0.1</version>
+			<version>1.3.0</version>
 		</dependency>
 	</dependencies>
+
+
+	<profiles>
+		<profile>
+			<id>MavenCentral</id>
+			<build>
+				<plugins>
+					<!-- Upload to maven central -->
+					<plugin>
+						<groupId>org.sonatype.plugins</groupId>
+						<artifactId>nexus-staging-maven-plugin</artifactId>
+					</plugin>
+
+					<!-- Signing the artifacts -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 </project>
